@@ -12,8 +12,13 @@
 
 
         <!-- ============================ COMPONENT 1 ================================= -->
-
-
+{% if not cart_items %}
+  <h2 class="text-center">Seu Carrinho de Compras está Vazio</h2>
+  <br>
+  <div class="text-center">
+    <a href="{% url 'store' %}" class="btn btn-primary">Continue Comprando</a>
+  </div>
+{% else %}
         <div class="row">
             <aside class="col-lg-9">
                 <div class="card">
@@ -107,6 +112,7 @@
 
 
         </div> <!-- row.// -->
+{% endif %}
         <!-- ============================ COMPONENT 1 END .// ================================= -->
 
 
