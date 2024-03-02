@@ -11,6 +11,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
+from django.http import HttpResponse
 
 
 def register(request):
@@ -70,3 +71,8 @@ def logout(request):
     auth.logout(request)
     messages.success(request, 'Você está desconectado.')
     return redirect('login')
+
+
+
+def activate(request):
+    return HttpResponse('OK')
