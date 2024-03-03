@@ -61,8 +61,8 @@ def login(request):
         
         if user is not None:
             auth.login(request, user)
-           # messages.success(request, 'Você está conectado agora.')
-            return redirect('home')
+            messages.success(request, 'Você está conectado agora.')
+            return redirect('dashboard')
         else:
             messages.error(request, 'Credenciais de login inválidas.')
             return redirect('login')
@@ -73,7 +73,6 @@ def logout(request):
     auth.logout(request)
     messages.success(request, 'Você está desconectado.')
     return redirect('login')
-
 
 
 def activate(request, uidb64, token):
@@ -91,3 +90,8 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, 'Link de ativação inválido')
         return redirect('register')
+ 
+@login_required(login_url = 'login')   
+def dashboard(request):
+    return render(request, 'accounts/dashboard.html')
+    
