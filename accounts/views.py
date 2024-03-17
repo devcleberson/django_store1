@@ -13,6 +13,8 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 
+from carts.views import _cart_id
+
 
 def register(request):
     if request.method == 'POST':
@@ -60,6 +62,17 @@ def login(request):
         user = auth.authenticate(email=email, password=password)
         
         if user is not None:
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
+                if is_cart_item_exists:
+                    cart_item = CartItem.objects.filter(cart=cart)
+                    
+                    for item in cart_item:
+                        item.user = user
+                        item.save()
+            except:
+                pass    
             auth.login(request, user)
             messages.success(request, 'Você está conectado agora.')
             return redirect('dashboard')
