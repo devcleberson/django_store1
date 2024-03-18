@@ -14,6 +14,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 
 from carts.views import _cart_id
+from carts.models import Cart, CartItem
 
 
 def register(request):
@@ -26,15 +27,16 @@ def register(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             username = email.split("@")[0]
-            user = Account.objects.create_user(first_name=first_name, last_name=last_name, email=email, username=username, password=password)
+            user = Account.objects.create_user(
+                first_name=first_name, last_name=last_name, email=email, username=username, password=password)
             user.phone_number = phone_number
             user.save()
-            
+
             # USER ACTIVATION
             current_site = get_current_site(request)
             mail_subject = 'Please activate your account'
             message = render_to_string('accounts/account_verification_email.html', {
-                'user': user, 
+                'user': user,
                 'domain': current_site,
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),
@@ -45,8 +47,7 @@ def register(request):
             # messages.success(request, 'Obrigado por se registrar conosco. Enviamos a você um e-mail de verificação para o seu endereço de e-mail [testesam137@gmail.com]. Por favor, verifique.')
             return redirect('/accounts/login/?command=verification&email='+email)
 
-            
-    else:        
+    else:
         form = RegistrationForm()
     context = {
         'form': form,
@@ -58,21 +59,26 @@ def login(request):
     if request.method == 'POST':
         email = request.POST['email']
         password = request.POST['password']
-        
+
         user = auth.authenticate(email=email, password=password)
-        
+
         if user is not None:
             try:
+                print('entering inside try block')
                 cart = Cart.objects.get(cart_id=_cart_id(request))
-                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
+                is_cart_item_exists = CartItem.objects.filter(
+                    cart=cart).exists()
+                print(is_cart_item_exists)
                 if is_cart_item_exists:
                     cart_item = CartItem.objects.filter(cart=cart)
-                    
+                    print(cart_item)
+
                     for item in cart_item:
                         item.user = user
                         item.save()
             except:
-                pass    
+                print('entering inside except block')
+                pass
             auth.login(request, user)
             messages.success(request, 'Você está conectado agora.')
             return redirect('dashboard')
@@ -81,7 +87,8 @@ def login(request):
             return redirect('login')
     return render(request, 'accounts/login.html')
 
-@login_required(login_url = 'login')
+
+@login_required(login_url='login')
 def logout(request):
     auth.logout(request)
     messages.success(request, 'Você está desconectado.')
@@ -92,9 +99,9 @@ def activate(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = Account._default_manager.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
+    except (TypeError, ValueError, OverflowError, Account.DoesNotExist):
         user = None
-        
+
     if user is not None and default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
@@ -103,8 +110,9 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, 'Link de ativação inválido')
         return redirect('register')
- 
-@login_required(login_url = 'login')   
+
+
+@login_required(login_url='login')
 def dashboard(request):
     return render(request, 'accounts/dashboard.html')
 
@@ -114,12 +122,12 @@ def forgotPassword(request):
         email = request.POST['email']
         if Account.objects.filter(email=email).exists():
             user = Account.objects.get(email__exact=email)
-            
+
             # Reset password email
             current_site = get_current_site(request)
             mail_subject = 'Redefinir sua senha'
             message = render_to_string('accounts/reset_password_email.html', {
-                'user': user, 
+                'user': user,
                 'domain': current_site,
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),
@@ -127,12 +135,13 @@ def forgotPassword(request):
             to_email = email
             send_email = EmailMessage(mail_subject, message, to=[to_email])
             send_email.send()
-            
-            messages.success(request, 'O e-mail de redefinição de senha foi enviado para seu endereço de e-mail.')
-            return redirect('login') 
+
+            messages.success(
+                request, 'O e-mail de redefinição de senha foi enviado para seu endereço de e-mail.')
+            return redirect('login')
         else:
-            messages.error(request, 'Conta não existe!')   
-            return redirect('forgotPassword') 
+            messages.error(request, 'Conta não existe!')
+            return redirect('forgotPassword')
     return render(request, 'accounts/forgotPassword.html')
 
 
@@ -140,9 +149,9 @@ def resetpassword_validate(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = Account._default_manager.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
+    except (TypeError, ValueError, OverflowError, Account.DoesNotExist):
         user = None
-    
+
     if user is not None and default_token_generator.check_token(user, token):
         request.session['uid'] = uid
         messages.success(request, 'Por favor redefina sua senha')
@@ -150,21 +159,22 @@ def resetpassword_validate(request, uidb64, token):
     else:
         messages.error(request, 'Este link expirou!')
         return redirect('login')
-    
+
+
 def resetPassword(request):
     if request.method == 'POST':
         password = request.POST['password']
         confirm_password = request.POST['confirm_password']
-        
+
         if password == confirm_password:
             uid = request.session.get('uid')
             user = Account.objects.get(pk=uid)
             user.set_password(password)
             user.save()
             messages.success(request, 'Password reset successful')
-            return redirect('login') 
+            return redirect('login')
         else:
             messages.error(request, 'Password do not match!')
-            return redirect('resetPassword')   
-    else:     
-        return render(request, 'accounts/resetPassword.html')  
+            return redirect('resetPassword')
+    else:
+        return render(request, 'accounts/resetPassword.html')
