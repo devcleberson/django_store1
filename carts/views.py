@@ -30,6 +30,7 @@ def add_cart(request, product_id):
                 except:
                     pass
 
+        
         is_cart_item_exists = CartItem.objects.filter(product=product, user=current_user).exists()
         if is_cart_item_exists:
             cart_item = CartItem.objects.filter(product=product, user=current_user)
