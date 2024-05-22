@@ -15,6 +15,7 @@ from django.core.mail import EmailMessage
 
 from carts.views import _cart_id
 from carts.models import Cart, CartItem
+import requests
 
 def register(request):
     if request.method == 'POST':
@@ -102,7 +103,20 @@ def login(request):
                 pass
             auth.login(request, user)
             messages.success(request, 'Você está conectado agora.')
-            return redirect('dashboard')
+            url = request.META.get('HTTP_REFERER')
+            try:
+                query = requests.utils.urlparse(url).query
+                print('query -> ', query)
+                print('-----------')
+                
+                # next=/cart/checkout/
+                params = dict(x.split('=') for x in query.split('&'))
+                if 'next' in params:
+                    nextPage = params['next']
+                    return redirect(nextPage)
+                
+            except:
+                return redirect('dashboard')
         else:
             messages.error(request, 'Credenciais de login inválidas.')
             return redirect('login')
